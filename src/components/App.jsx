@@ -15,47 +15,58 @@ export default class App extends React.Component {
     filter: '',
   };
 
-  addContact = (contact) => {
-
-    const { contacts } = this.state;
-
-  
-  const isNameAlreadyExists = contacts.some((existingContact) => existingContact.name === contact.name);
-
-  if (isNameAlreadyExists) {
-    alert('This name is already in the phonebook. Please choose a different name.');
-    return false;  
+  componentDidMount() {
+    const storedContacts = localStorage.getItem('contacts');
+    if (storedContacts) {
+      this.setState({ contacts: JSON.parse(storedContacts) });
+    }
   }
-    this.setState((prevState) => ({
-      contacts: [...prevState.contacts, contact],
-    }));
-    return true;
+
+  addContact = (contact) => {
+    this.setState((prevState) => {
+      const isNameAlreadyExists = prevState.contacts.some(
+        (existingContact) => existingContact.name === contact.name
+      );
+
+      if (isNameAlreadyExists) {
+        alert(
+          'This name is already in the phonebook. Please choose a different name.'
+        );
+        return { contacts: [...prevState.contacts] };
+      }
+
+      const newContacts = [...prevState.contacts, contact];
+
+      localStorage.setItem('contacts', JSON.stringify(newContacts));
+
+      return { contacts: newContacts };
+    });
   };
 
   handleDeleteContact = (id) => {
-    this.setState((prevState) => ({
-      contacts: prevState.contacts.filter((contact) => contact.id !== id),
-    }));
+    this.setState((prevState) => {
+      const newContacts = prevState.contacts.filter(
+        (contact) => contact.id !== id
+      );
+
+      localStorage.setItem('contacts', JSON.stringify(newContacts));
+
+      return { contacts: newContacts };
+    });
   };
 
   getFilteredContacts = () => {
     const { contacts, filter } = this.state;
     const normalizedFilter = filter.toLowerCase();
-  
+
     return contacts.filter((contact) =>
       contact.name.toLowerCase().includes(normalizedFilter)
     );
   };
+
   handleFilterChange = (value) => {
     this.setState({ filter: value });
   };
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-  
 
   render() {
     const filteredContacts = this.getFilteredContacts();
@@ -70,7 +81,8 @@ export default class App extends React.Component {
           contacts={filteredContacts}
           onDelete={this.handleDeleteContact}
         />
-      </AppContainer>)
+      </AppContainer>
+    );
   }
 }
 
